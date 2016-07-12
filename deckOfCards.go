@@ -9,8 +9,8 @@ import (
 
 // CardRecord represents the JSON data sent from server representing a card
 type CardRecord struct {
-	Value string `json:"value"`
 	Suit  string `json:"suit"`
+	Value string `json:"value"`
 }
 
 func (card CardRecord) String() string {
@@ -30,9 +30,9 @@ type DeckRecord struct {
 
 func (deck DeckRecord) String() string {
 	out := fmt.Sprintf("Remaining: %v\n", deck.Remaining)
-	out += fmt.Sprintf("Cards: %v\n", len(deck.Cards))
+	out += fmt.Sprintf("Cards: %v", len(deck.Cards))
 	for i, c := range deck.Cards {
-		out += fmt.Sprintf("\t%d: %v\n", i, c)
+		out += fmt.Sprintf("\n\t%d: %v", i, c)
 	}
 	return out
 }
