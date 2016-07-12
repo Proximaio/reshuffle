@@ -3,14 +3,23 @@ package main
 import "testing"
 
 func TestCardString(t *testing.T) {
-	card := Card{"10", "SPADES"}
-	s := card.String()
-	e := "[10 of Spades]"
-	if s != e {
-		t.Error(
-			"For", card,
-			"expected", e,
-			"got", s,
-		)
+	var cardTests = []struct {
+		suit, value, expected string
+	}{
+		{"SPADES", "10", "10 of Spades"},
+		{"DIAMONDS", "JACK", "Jack of Diamonds"},
+		{"CLUBS", "1", "1 of Clubs"},
+		{"HEARTS", "KING", "King of Hearts"},
+	}
+
+	for _, c := range cardTests {
+		card := Card{c.value, c.suit}
+		got := card.String()
+		if got != c.expected {
+			t.Errorf(
+				"For suit %s and value %s got: %s expected: %s",
+				c.suit, c.value, got, c.expected,
+			)
+		}
 	}
 }
