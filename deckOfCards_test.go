@@ -13,7 +13,7 @@ func TestCardString(t *testing.T) {
 	}
 
 	for _, c := range cardTests {
-		card := Card{c.value, c.suit}
+		card := CardRecord{c.value, c.suit}
 		got := card.String()
 		if got != c.expected {
 			t.Errorf(
