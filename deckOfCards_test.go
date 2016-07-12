@@ -2,12 +2,38 @@ package main
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 )
+
+type TestEndpoints struct {
+	url string
+}
+
+func (t TestEndpoints) NewDeck(cards uint) string {
+	return t.url
+}
+
+func DeckServer(body string, response int) (server *httptest.Server, client *http.Client, endpoints Endpoints) {
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(response)
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, body)
+	}))
+
+	transport := &http.Transport{
+		Proxy: func(req *http.Request) (*url.URL, error) {
+			return url.Parse(server.URL)
+		},
+	}
+	client = &http.Client{Transport: transport}
+
+	endpoints = TestEndpoints{server.URL}
+
+	return
+}
 
 func TestCardString(t *testing.T) {
 	var cardTests = []struct {
@@ -71,11 +97,9 @@ func TestDeckString(t *testing.T) {
 }
 
 func TestGetDeck(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		w.Header().Set("Content-Type", "application/json")
-		io.WriteString(w,
-			`{
+	response := int(200)
+	body :=
+		`{
 				"success": true,
 				"cards": [
 						{
@@ -93,23 +117,15 @@ func TestGetDeck(t *testing.T) {
 				],
 				"deck_id":"3p40paa87x90",
 				"remaining": 50
-			}`,
-		)
-	}))
+			}`
+	server, client, endpoints := DeckServer(body, response)
 	defer server.Close()
 
-	transport := &http.Transport{
-		Proxy: func(req *http.Request) (*url.URL, error) {
-			return url.Parse(server.URL)
-		},
-	}
-	client := &http.Client{Transport: transport}
-	logger := &log.Logger{}
-	NewDeck = func(cards uint) string { return server.URL }
 	deck, err := GetDeck(DeckOpts{
-		Shuffle: true,
-		Cards:   2,
-	}, client, logger)
+		Shuffle:   true,
+		Cards:     2,
+		Endpoints: endpoints,
+	}, client)
 
 	if err != nil {
 		t.Errorf("Expected err = nil. Got err = %s", err)
@@ -117,5 +133,78 @@ func TestGetDeck(t *testing.T) {
 
 	if len(deck.Cards) != 2 {
 		t.Errorf("Expected 2 cards. Got %d", len(deck.Cards))
+	}
+}
+
+func TestGetDeckBadBody(t *testing.T) {
+	response := int(200)
+	body :=
+		`{
+				"success": true,
+				"cards": [
+						{
+								"image": "http://deckofcardsapi.com/static/img/KH.png",
+								"value": "KING",
+								"sui`
+
+	server, client, endpoints := DeckServer(body, response)
+	defer server.Close()
+
+	deck, err := GetDeck(DeckOpts{
+		Shuffle:   true,
+		Cards:     2,
+		Endpoints: endpoints,
+	}, client)
+
+	if err == nil {
+		t.Errorf("Expected err != nil. Got err = %s", err)
+	}
+
+	if len(deck.Cards) != 0 {
+		t.Errorf("Expected 0 cards. Got %d", len(deck.Cards))
+	}
+}
+
+func TestGetDeck404(t *testing.T) {
+	response := int(404)
+	body := ""
+
+	server, client, endpoints := DeckServer(body, response)
+	defer server.Close()
+
+	deck, err := GetDeck(DeckOpts{
+		Shuffle:   true,
+		Cards:     2,
+		Endpoints: endpoints,
+	}, client)
+
+	if err == nil {
+		t.Errorf("Expected err != nil. Got err = %s", err)
+	}
+
+	if len(deck.Cards) != 0 {
+		t.Errorf("Expected 0 cards. Got %d", len(deck.Cards))
+	}
+}
+
+func TestGetDeckBadRequest(t *testing.T) {
+	response := int(404)
+	body := ""
+
+	server, client, endpoints := DeckServer(body, response)
+	server.Close()
+
+	deck, err := GetDeck(DeckOpts{
+		Shuffle:   true,
+		Cards:     2,
+		Endpoints: endpoints,
+	}, client)
+
+	if err == nil {
+		t.Errorf("Expected err != nil. Got err = %s", err)
+	}
+
+	if len(deck.Cards) != 0 {
+		t.Errorf("Expected 0 cards. Got %d", len(deck.Cards))
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -38,18 +37,22 @@ func (deck DeckRecord) String() string {
 	return out
 }
 
-var (
-	NewDeck = func(cards uint) string {
-		return fmt.Sprintf("http://deckofcardsapi.com/api/deck/new/draw/?count=%d", cards)
-	}
-)
+type Endpoints interface {
+	NewDeck(cards uint) string
+}
+type DefaultEndpoints struct{}
+
+func (d DefaultEndpoints) NewDeck(cards uint) string {
+	return fmt.Sprintf("http://deckofcardsapi.com/api/deck/new/draw/?count=%d", cards)
+}
 
 // DeckOpts is the configuration for the deck of cards we want
 type DeckOpts struct {
 	// Should we shuffle?
 	Shuffle bool
 	// How many decks are we drawing from
-	Cards uint
+	Cards     uint
+	Endpoints Endpoints
 }
 
 // Doer is the Wrapper for object that is used to actually hit the deck of cards API
@@ -57,21 +60,21 @@ type Doer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-// Logger is the wrapper for logging
-type Logger interface {
-	Fatal(v ...interface{})
-}
-
 // GetDeck fetches a deck of cards from API
-func GetDeck(opts DeckOpts, d Doer, l Logger) (DeckRecord, error) {
+func GetDeck(opts DeckOpts, d Doer) (DeckRecord, error) {
 	deck := DeckRecord{}
 	deck.Success = false
 
-	url := NewDeck(opts.Cards)
+	var url string
+	if opts.Endpoints != nil {
+		url = opts.Endpoints.NewDeck(opts.Cards)
+	} else {
+		defaultEndpoints := DefaultEndpoints{}
+		url = defaultEndpoints.NewDeck(opts.Cards)
+	}
+
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := d.Do(req)
-
-	log.Print(url)
 
 	if err != nil {
 		return deck, err
