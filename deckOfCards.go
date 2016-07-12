@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -37,12 +38,18 @@ func (deck DeckRecord) String() string {
 	return out
 }
 
+var (
+	NewDeck = func(cards uint) string {
+		return fmt.Sprintf("http://deckofcardsapi.com/api/deck/new/draw/?count=%d", cards)
+	}
+)
+
 // DeckOpts is the configuration for the deck of cards we want
 type DeckOpts struct {
 	// Should we shuffle?
 	Shuffle bool
 	// How many decks are we drawing from
-	Cards uint8
+	Cards uint
 }
 
 // Doer is the Wrapper for object that is used to actually hit the deck of cards API
@@ -60,18 +67,18 @@ func GetDeck(opts DeckOpts, d Doer, l Logger) (DeckRecord, error) {
 	deck := DeckRecord{}
 	deck.Success = false
 
-	url := fmt.Sprintf("http://deckofcardsapi.com/api/deck/new/draw/?count=%d", opts.Cards)
+	url := NewDeck(opts.Cards)
 	req, _ := http.NewRequest("GET", url, nil)
 	resp, err := d.Do(req)
 
+	log.Print(url)
+
 	if err != nil {
-		l.Fatal("Error fecthing deck", err)
 		return deck, err
 	}
 	defer resp.Body.Close()
 
 	if err := json.NewDecoder(resp.Body).Decode(&deck); err != nil {
-		l.Fatal("Error decoding deck", err)
 		return deck, err
 	}
 
