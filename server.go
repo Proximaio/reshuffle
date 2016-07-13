@@ -10,21 +10,33 @@ import (
 var client Doer
 var endpoints Endpoints
 
-type ServerOpts struct {
+type Server struct {
 	Endpoints Endpoints
 	Client    Doer
+	Port      string
+	Router    *gin.Engine
 }
 
-func StartServer(opts ServerOpts) {
+func SetUp(opts Server) *Server {
 	client = opts.Client
 	endpoints = opts.Endpoints
 
 	router := gin.Default()
-	router.GET("/deck/:count", deck)
-	router.Run(":8080")
+	router.GET("/deck/:count", Deck)
+
+	return &Server{
+		Endpoints: endpoints,
+		Client:    client,
+		Port:      opts.Port,
+		Router:    router,
+	}
 }
 
-func deck(c *gin.Context) {
+func (s *Server) Start() {
+	s.Router.Run()
+}
+
+func Deck(c *gin.Context) {
 	count := c.Param("count")
 	i, err := strconv.ParseUint(count, 10, 0)
 

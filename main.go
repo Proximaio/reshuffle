@@ -19,5 +19,5 @@ func main() {
 		fmt.Println(deck)
 	}
 
-	StartServer(ServerOpts{})
+	SetUp(Server{}).Start()
 }
