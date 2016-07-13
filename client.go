@@ -53,6 +53,7 @@ type DeckOpts struct {
 	// How many decks are we drawing from
 	Cards     uint
 	Endpoints Endpoints
+	Client    Doer
 }
 
 // Doer is the Wrapper for object that is used to actually hit the deck of cards API
@@ -61,7 +62,7 @@ type Doer interface {
 }
 
 // GetDeck fetches a deck of cards from API
-func GetDeck(opts DeckOpts, d Doer) (DeckRecord, error) {
+func GetDeck(opts DeckOpts) (DeckRecord, error) {
 	deck := DeckRecord{}
 	deck.Success = false
 
@@ -69,12 +70,18 @@ func GetDeck(opts DeckOpts, d Doer) (DeckRecord, error) {
 	if opts.Endpoints != nil {
 		url = opts.Endpoints.NewDeck(opts.Cards)
 	} else {
-		defaultEndpoints := DefaultEndpoints{}
-		url = defaultEndpoints.NewDeck(opts.Cards)
+		url = DefaultEndpoints{}.NewDeck(opts.Cards)
+	}
+
+	var client Doer
+	if opts.Client != nil {
+		client = opts.Client
+	} else {
+		client = &http.Client{}
 	}
 
 	req, _ := http.NewRequest("GET", url, nil)
-	resp, err := d.Do(req)
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return deck, err

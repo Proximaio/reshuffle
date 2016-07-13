@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"net/http"
-)
+import "fmt"
 
 type DeckEndpoints struct{}
 
@@ -12,16 +9,15 @@ func (d DeckEndpoints) NewDeck(cards uint) string {
 }
 
 func main() {
-
-	client := &http.Client{}
-
 	deck, err := GetDeck(DeckOpts{
 		Shuffle:   true,
 		Cards:     52,
 		Endpoints: DeckEndpoints{},
-	}, client)
+	})
 
 	if err == nil {
 		fmt.Println(deck)
 	}
+
+	StartServer(ServerOpts{})
 }

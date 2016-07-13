@@ -22,16 +22,13 @@ func DeckServer(body string, response int) (server *httptest.Server, client *htt
 		w.Header().Set("Content-Type", "application/json")
 		io.WriteString(w, body)
 	}))
-
 	transport := &http.Transport{
 		Proxy: func(req *http.Request) (*url.URL, error) {
 			return url.Parse(server.URL)
 		},
 	}
 	client = &http.Client{Transport: transport}
-
 	endpoints = TestEndpoints{server.URL}
-
 	return
 }
 
@@ -125,7 +122,8 @@ func TestGetDeck(t *testing.T) {
 		Shuffle:   true,
 		Cards:     2,
 		Endpoints: endpoints,
-	}, client)
+		Client:    client,
+	})
 
 	if err != nil {
 		t.Errorf("Expected err = nil. Got err = %s", err)
@@ -154,7 +152,8 @@ func TestGetDeckBadBody(t *testing.T) {
 		Shuffle:   true,
 		Cards:     2,
 		Endpoints: endpoints,
-	}, client)
+		Client:    client,
+	})
 
 	if err == nil {
 		t.Errorf("Expected err != nil. Got err = %s", err)
@@ -176,7 +175,8 @@ func TestGetDeck404(t *testing.T) {
 		Shuffle:   true,
 		Cards:     2,
 		Endpoints: endpoints,
-	}, client)
+		Client:    client,
+	})
 
 	if err == nil {
 		t.Errorf("Expected err != nil. Got err = %s", err)
@@ -198,7 +198,8 @@ func TestGetDeckBadRequest(t *testing.T) {
 		Shuffle:   true,
 		Cards:     2,
 		Endpoints: endpoints,
-	}, client)
+		Client:    client,
+	})
 
 	if err == nil {
 		t.Errorf("Expected err != nil. Got err = %s", err)
