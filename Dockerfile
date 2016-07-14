@@ -11,7 +11,7 @@ ADD . /go/src/github.com/proximaio/reshuffle
 RUN go install github.com/proximaio/reshuffle
 
 # Run the outyet command by default when the container starts.
-ENTRYPOINT /go/bin/reshuffle
+ENTRYPOINT /go/bin/reshuffle -server
 
 # Document that the service listens on port 8080.
 EXPOSE 8080
