@@ -1,23 +1,27 @@
 package main
 
-import "fmt"
-
-type DeckEndpoints struct{}
-
-func (d DeckEndpoints) NewDeck(cards uint) string {
-	return fmt.Sprintf("http://deckofcardsapi.com/api/deck/new/draw/?count=%d")
-}
+import (
+	"flag"
+	"fmt"
+)
 
 func main() {
-	deck, err := GetDeck(DeckOpts{
-		Shuffle:   true,
-		Cards:     52,
-		Endpoints: DeckEndpoints{},
-	})
+	cardFlag := flag.Int("cards", 0, "number of cards, greater than 0")
+	serverFlag := flag.Bool("server", false, "run server")
+	flag.Parse()
 
-	if err == nil {
-		fmt.Println(deck)
+	if *cardFlag > 0 {
+		deck, err := GetDeck(DeckOpts{
+			Cards: 52,
+		})
+		if err == nil {
+			fmt.Println(deck)
+		} else {
+			fmt.Println(err)
+		}
 	}
 
-	SetUp(Server{}).Start()
+	if *serverFlag {
+		SetUp(Server{}).Start()
+	}
 }
